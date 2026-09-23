@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import {
   startRound, setQuestion, showOptions, startTimer,
   stopTimer, revealAnswer, updateTeamScore,
-  nextTeam, resetGame, resetRound, setPhase, lockOption, selectTeam
+  nextTeam, resetGame, resetRound, setPhase, lockOption, selectTeam, verifyAdminPassword
 } from '@/app/actions';
 import { useSocket } from '@/app/socket-provider';
 import { kbcAudio } from '@/lib/kbc-audio';
@@ -42,7 +42,7 @@ export default function AdminLivePage() {
   const [err, setErr] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('admin_auth') === 'true') {
+    if (typeof window !== 'undefined' && localStorage.getItem('quiz_admin_session') === 'true') {
       setAuthenticated(true);
     }
   }, []);
@@ -51,10 +51,10 @@ export default function AdminLivePage() {
     return (
       <div className="admin-auth-root">
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (password === 'admin123') {
-              localStorage.setItem('admin_auth', 'true');
+            if (await verifyAdminPassword(password)) {
+              localStorage.setItem('quiz_admin_session', 'true');
               setAuthenticated(true);
             } else {
               setErr(true);

@@ -200,3 +200,8 @@ export async function setPhase(phase: string) {
   await pool.query(`UPDATE game_state SET phase = $1`, [phase]);
   await notifyServer();
 }
+
+export async function verifyAdminPassword(password: string) {
+  const expected = process.env.ADMIN_PASSWORD;
+  return !!expected && password === expected;
+}

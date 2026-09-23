@@ -1,0 +1,75 @@
+dandelion.png
+Air title.png
+#(-27;@EJOTY^chmrw|
+dandelion.png
+Air title.png
+Air title.png
+#(-27;@EJOTY^chmrw|
+dandelion.png
+Air title.png
+Air title.png
+#(-27;@EJOTY^chmrw|
+dandelion.png
+Air title.png
+Air title.png
+#(-27;@EJOTY^chmrw|
+10_Mountain
+11_Mountain
+PowerPoint Document
+SummaryInformation
+Header Placeholder 1
+Slide Image Placeholder 3
+Notes Placeholder 4
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+"Exam Warriors"
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+opacity: 0.25
+(Supreme Leader)
+DocumentSummaryInformation
+Current User
+(Emmanuel Macron) -
+(Strait of Hormuz) -
+(Carrefour) -
+#ppt_x-0.25
+#ppt_y-sin(pi*$)/3
+#ppt_y-sin(pi*$)/9
+#ppt_y-sin(pi*$)/27
+#ppt_y-sin(pi*$)/81
+Slide Image Placeholder 1
+Notes Placeholder 2
+Slide Image Placeholder 1
+Notes Placeholder 2
+Slide Image Placeholder 1
+Notes Placeholder 2
+Slide Image Placeholder 1
+Notes Placeholder 2
+Slide Image Placeholder 1
+Notes Placeholder 2
+Slide Image Placeholder 1
+Notes Placeholder 2
+PowerPoint Document
+SummaryInformation
+DocumentSummaryInformation
+Current User

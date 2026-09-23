@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from '@/app/socket-provider';
 import Link from 'next/link';
+import { verifyAdminPassword } from '@/app/actions';
 
 export default function AdminHome() {
   const { gameState: state } = useSocket();
@@ -11,15 +12,15 @@ export default function AdminHome() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('admin_auth') === 'true') {
+    if (typeof window !== 'undefined' && localStorage.getItem('quiz_admin_session') === 'true') {
       setAuthenticated(true);
     }
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') {
-      localStorage.setItem('admin_auth', 'true');
+    if (await verifyAdminPassword(password)) {
+      localStorage.setItem('quiz_admin_session', 'true');
       setAuthenticated(true);
       setError(false);
     } else {
@@ -68,7 +69,7 @@ export default function AdminHome() {
           <Link href="/" className="header-link">← Home</Link>
           <div className="v-divider" />
           <button
-            onClick={() => { localStorage.removeItem('admin_auth'); setAuthenticated(false); }}
+            onClick={() => { localStorage.removeItem('quiz_admin_session'); setAuthenticated(false); }}
             className="header-link"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >

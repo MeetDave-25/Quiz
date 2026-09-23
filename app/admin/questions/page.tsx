@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { verifyAdminPassword } from '@/app/actions';
 import { useSocket } from '@/app/socket-provider';
 
 interface Question {
@@ -31,7 +32,7 @@ export default function QuestionBank() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('admin_auth') === 'true') {
+    if (typeof window !== 'undefined' && localStorage.getItem('quiz_admin_session') === 'true') {
       setAuthenticated(true);
     }
   }, []);
@@ -40,10 +41,10 @@ export default function QuestionBank() {
     return (
       <div className="admin-auth-root">
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (password === 'admin123') {
-              localStorage.setItem('admin_auth', 'true');
+            if (await verifyAdminPassword(password)) {
+              localStorage.setItem('quiz_admin_session', 'true');
               setAuthenticated(true);
             } else {
               setErr(true);

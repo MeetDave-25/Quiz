@@ -3,15 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"node --env-file=.env.local server/index.js\" \"next dev\"",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "concurrently \"node --env-file=.env.local server/index.js\" \"next start\"",
+    "lint": "eslint",
+    "seed": "node --env-file=.env.local seed-gk.js",
+    "sync-ppt": "node --env-file=.env.local sync-ppt.js"
   },
   "dependencies": {
+    "concurrently": "^10.0.5",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "next": "16.3.5",
+    "pg": "^8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

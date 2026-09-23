@@ -64,10 +64,11 @@ export async function updateGameState(updates: Record<string, unknown>) {
 }
 
 async function notifyServer() {
+  const base = process.env.SOCKET_SERVER_URL || 'http://localhost:3001';
   try {
-    await fetch('http://localhost:3001/sync');
+    await fetch(`${base}/sync`);
   } catch (e) {
-    // Socket server sync failure is non-blocking
+    // Socket server sync failure is non-blocking — the client's own poll will catch up
   }
 }
 

@@ -1,16 +1,24 @@
+'use client';
+
 import Link from 'next/link';
-import { EVENT, ROUND_BRANDS, TEAM_BRANDS } from '@/lib/quiz-brand';
+import { EVENT, ROUND_BRANDS, TEAM_BRANDS, questionsPerTeam } from '@/lib/quiz-brand';
+import { useLang, LangSwitcher } from '@/lib/i18n';
 
 export default function LandingPage() {
+  const { t } = useLang();
+
   return (
     <div className="lj-root">
       <div className="lj-container">
-        <div className="lj-univ-badge">
-          <span className="lj-univ-icon">LJ</span>
-          <div>
-            <div className="lj-univ-name">{EVENT.university}</div>
-            <div className="lj-univ-sub">{EVENT.city} · {EVENT.festival}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div className="lj-univ-badge" style={{ marginBottom: 0 }}>
+            <span className="lj-univ-icon">LJ</span>
+            <div>
+              <div className="lj-univ-name">{EVENT.university}</div>
+              <div className="lj-univ-sub">{t('landing.subBadge', EVENT.city, EVENT.festival)}</div>
+            </div>
           </div>
+          <LangSwitcher />
         </div>
 
         <div className="lj-hero-img">
@@ -18,34 +26,28 @@ export default function LandingPage() {
         </div>
 
         <div className="lj-hero-section">
-          <h1 className="lj-event-name">GK Quiz Competition</h1>
-          <p className="lj-subtitle">
-            5 teams · 4 rounds · live scoring on the big screen. Coordinated by {EVENT.coordinator}.
-          </p>
+          <h1 className="lj-event-name">{t('landing.title')}</h1>
+          <p className="lj-subtitle">{t('landing.subtitle', EVENT.coordinator)}</p>
         </div>
 
         <div className="lj-portals">
           <Link href="/presentation" className="lj-portal lj-portal-display">
-            <div className="lj-portal-badge">For the projector</div>
-            <h2 className="lj-portal-label">Stage Display</h2>
-            <p className="lj-portal-desc">
-              Full-screen KBC-style show for the hall: questions, picture rounds, the 30-second timer, and live scores.
-            </p>
-            <div className="lj-portal-btn"><span>Open Stage Display</span><span>→</span></div>
+            <div className="lj-portal-badge">{t('landing.stageBadge')}</div>
+            <h2 className="lj-portal-label">{t('landing.stageLabel')}</h2>
+            <p className="lj-portal-desc">{t('landing.stageDesc')}</p>
+            <div className="lj-portal-btn"><span>{t('landing.stageBtn')}</span><span>→</span></div>
           </Link>
 
           <Link href="/admin/live" className="lj-portal lj-portal-admin">
-            <div className="lj-portal-badge">For the quiz master · password</div>
-            <h2 className="lj-portal-label">Control Room</h2>
-            <p className="lj-portal-desc">
-              Run the quiz step by step — pick the team and question, reveal options, start the timer, award points.
-            </p>
-            <div className="lj-portal-btn"><span>Enter Control Room</span><span>→</span></div>
+            <div className="lj-portal-badge">{t('landing.adminBadge')}</div>
+            <h2 className="lj-portal-label">{t('landing.adminLabel')}</h2>
+            <p className="lj-portal-desc">{t('landing.adminDesc')}</p>
+            <div className="lj-portal-btn"><span>{t('landing.adminBtn')}</span><span>→</span></div>
           </Link>
         </div>
 
         <div className="lj-rounds-section">
-          <div className="lj-rounds-heading">Competition rounds</div>
+          <div className="lj-rounds-heading">{t('landing.roundsHeading')}</div>
           <div className="lj-rounds-grid">
             {Object.entries(ROUND_BRANDS).map(([num, r]) => (
               <div key={num} className="lj-round-card">
@@ -53,7 +55,7 @@ export default function LandingPage() {
                 <div className="lj-round-body">
                   <div className="round-card-num">{r.label}</div>
                   <div className="round-card-name">{r.hi}</div>
-                  <div className="round-card-meta">{r.name} · 5 questions per team</div>
+                  <div className="round-card-meta">{r.name} · {t('landing.perTeam', questionsPerTeam(Number(num)))}</div>
                 </div>
               </div>
             ))}
@@ -61,15 +63,15 @@ export default function LandingPage() {
         </div>
 
         <div className="lj-rounds-section">
-          <div className="lj-rounds-heading">Teams on stage</div>
+          <div className="lj-rounds-heading">{t('landing.teamsHeading')}</div>
           <div className="lj-team-grid">
-            {TEAM_BRANDS.map((t, i) => (
-              <div key={t.name} className="lj-team-card">
-                <img src={t.banner} alt={t.name} />
+            {TEAM_BRANDS.map((tm, i) => (
+              <div key={tm.name} className="lj-team-card">
+                <img src={tm.banner} alt={tm.name} />
                 <div className="lj-team-body">
-                  <span className="round-card-num">Team {i + 1}</span>
-                  <b>{t.name}</b>
-                  <small>{t.hi}</small>
+                  <span className="round-card-num">{t('landing.team')} {i + 1}</span>
+                  <b>{tm.name}</b>
+                  <small>{tm.hi}</small>
                 </div>
               </div>
             ))}
@@ -80,7 +82,7 @@ export default function LandingPage() {
           <div>
             <div className="footer-title">{EVENT.university} · {EVENT.city}</div>
             <div className="footer-sub">
-              {EVENT.festival} · Team members can join from their phones at <Link href="/team" className="lj-inline-link">/team</Link>
+              {EVENT.festival} · {t('landing.footerJoin')} <Link href="/team" className="lj-inline-link">/team</Link>
             </div>
           </div>
           <div className="footer-sub" style={{ textAlign: 'right' }}>{EVENT.credit}</div>

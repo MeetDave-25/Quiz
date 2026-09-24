@@ -34,6 +34,7 @@ const fetchStateFromDB = async () => {
         q.option_a, q.option_b, q.option_c, q.option_d,
         q.correct_answer,
         q.media_url,
+        q.media_type,
         EXTRACT(EPOCH FROM (NOW() - g.timer_started_at)) AS timer_elapsed_seconds,
         (SELECT json_agg(t2.* ORDER BY t2.id) FROM teams t2) as all_teams,
         (SELECT json_agg(q2.* ORDER BY q2.id) FROM questions q2) as all_questions
@@ -96,8 +97,13 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Socket.IO Server running on port ${PORT}`);
+  // Make sure the movie-round columns exist even if the Next.js app hasn't run yet.
+  await dbClient.query(`
+    ALTER TABLE questions ADD COLUMN IF NOT EXISTS media_type VARCHAR(10) DEFAULT 'image';
+    ALTER TABLE questions ADD COLUMN IF NOT EXISTS team_slot INTEGER;
+  `).catch((e) => console.error('Could not ensure movie-round columns', e));
   fetchStateFromDB();
   
   // Fast loop just for timer updates (every 200ms) without hitting DB if timer is running

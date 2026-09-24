@@ -4,13 +4,14 @@ import { useEffect, useState, useTransition } from 'react';
 import {
   startRound, setQuestion, showOptions, startTimer,
   stopTimer, revealAnswer, updateTeamScore,
-  nextTeam, resetGame, resetRound, setPhase, lockOption, selectTeam, verifyAdminPassword
+  nextTeam, resetGame, resetRound, setPhase, lockOption, selectTeam, verifyAdminPassword,
+  saveMovieClip, deleteMovieClip
 } from '@/app/actions';
 import { useSocket } from '@/app/socket-provider';
 import { kbcAudio } from '@/lib/kbc-audio';
 import { hostVoice, VOICE_CLIPS } from '@/lib/host-voice';
 import Link from 'next/link';
-import { ROUND_BRANDS, TEAM_BRANDS } from '@/lib/quiz-brand';
+import { ROUND_BRANDS, TEAM_BRANDS, questionsPerTeam } from '@/lib/quiz-brand';
 
 interface Question {
   id: number;
@@ -22,6 +23,8 @@ interface Question {
   option_d?: string;
   correct_answer?: string;
   media_url?: string | null;
+  media_type?: 'image' | 'video' | null;
+  team_slot?: number | null;
 }
 
 interface Team {
@@ -96,7 +99,7 @@ function ControlRoom() {
   const { gameState: state } = useSocket();
   const [isPending, startTransition] = useTransition();
   const [selectedRound, setSelectedRound] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'voice' | 'scores' | 'stage'>('voice');
+  const [activeTab, setActiveTab] = useState<'voice' | 'scores' | 'movie' | 'stage'>('voice');
 
   useEffect(() => {
     if (state?.current_round) {
@@ -130,19 +133,25 @@ function ControlRoom() {
   const currentQuestionId: number | null = state.current_question_id;
 
   const roundQuestions = allQuestions.filter((q) => q.round_number === selectedRound);
+  const isMovieRound = selectedRound === 4;
+  const perTeam = questionsPerTeam(selectedRound);
 
   const activeTeamIndex = Math.max(
     0,
     allTeams.findIndex((t) => t.id === currentTeamId)
   );
 
-  const teamQuestions = roundQuestions.slice(activeTeamIndex * 5, activeTeamIndex * 5 + 5);
+  const teamQuestions = isMovieRound
+    ? roundQuestions.filter((q) => q.team_slot === activeTeamIndex + 1)
+    : roundQuestions.slice(activeTeamIndex * perTeam, activeTeamIndex * perTeam + perTeam);
 
   const activeQuestion = allQuestions.find((q) => q.id === currentQuestionId) || teamQuestions[0];
   const activeQuestionIndex = teamQuestions.findIndex((q) => q.id === activeQuestion?.id);
   const activeTeam = allTeams.find((t) => t.id === currentTeamId) || allTeams[0];
+  const totalForTeam = teamQuestions.length || perTeam;
 
   const isMCQ = selectedRound === 1 && activeQuestion?.option_a;
+  const isVideo = activeQuestion?.media_type === 'video';
   const lockedOpt = state.locked_option;
   const showAns = !!state.show_answer;
   const isTimerRunning = phase === 'timer';
@@ -183,7 +192,7 @@ function ControlRoom() {
       <div style={{ padding: '1rem 2rem', background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
           <span className="sub-tag" style={{ fontWeight: 600 }}>Teams on stage — click to switch whose turn it is</span>
-          <span className="sub-tag">Each team plays 5 questions in a row</span>
+          <span className="sub-tag">Each team plays {questionsPerTeam(selectedRound)} question{questionsPerTeam(selectedRound) === 1 ? '' : 's'} in a row</span>
         </div>
 
         <div className="admin-teams-grid">
@@ -212,7 +221,7 @@ function ControlRoom() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span className="brutal-tag tag-yellow">{activeTeam?.name}&apos;s turn</span>
               <span className="brutal-tag tag-orange">
-                Question {activeQuestionIndex >= 0 ? activeQuestionIndex + 1 : 1} of 5
+                Question {activeQuestionIndex >= 0 ? activeQuestionIndex + 1 : 1} of {totalForTeam}
               </span>
             </div>
 
@@ -239,16 +248,26 @@ function ControlRoom() {
             </div>
             <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'flex-start' }}>
               {activeQuestion?.media_url && (
-                <img
-                  src={activeQuestion.media_url}
-                  alt="Question picture"
-                  style={{ width: '260px', borderRadius: '10px', border: '1px solid var(--border)', flexShrink: 0 }}
-                />
+                isVideo ? (
+                  <video
+                    src={activeQuestion.media_url}
+                    controls
+                    style={{ width: '260px', borderRadius: '10px', border: '1px solid var(--border)', flexShrink: 0 }}
+                  />
+                ) : (
+                  <img
+                    src={activeQuestion.media_url}
+                    alt="Question picture"
+                    style={{ width: '260px', borderRadius: '10px', border: '1px solid var(--border)', flexShrink: 0 }}
+                  />
+                )
               )}
               <div style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: 1.5, color: 'var(--text)' }}>
                 {activeQuestion ? activeQuestion.text : 'No question selected. Click Q1 above.'}
                 {activeQuestion?.media_url && (
-                  <div className="sub-tag" style={{ marginTop: '0.5rem' }}>This picture is shown on the projector.</div>
+                  <div className="sub-tag" style={{ marginTop: '0.5rem' }}>
+                    {isVideo ? 'This clip plays on the projector.' : 'This picture is shown on the projector.'}
+                  </div>
                 )}
               </div>
             </div>
@@ -342,16 +361,16 @@ function ControlRoom() {
 
               <button
                 onClick={() => {
-                  const nextIdx = (activeQuestionIndex + 1) % 5;
+                  const nextIdx = (activeQuestionIndex + 1) % totalForTeam;
                   const nextQ = teamQuestions[nextIdx];
                   if (nextQ) act(() => setQuestion(nextQ.id));
                 }}
-                disabled={isPending}
+                disabled={isPending || teamQuestions.length < 2}
                 className="step-btn"
               >
                 <span className="step-num">Step 4</span>
                 <span className="step-title">
-                  Next question ({activeQuestionIndex + 2 <= 5 ? `Q${activeQuestionIndex + 2}` : 'Q1'})
+                  Next question ({activeQuestionIndex + 2 <= totalForTeam ? `Q${activeQuestionIndex + 2}` : 'Q1'})
                 </span>
               </button>
             </div>
@@ -376,7 +395,7 @@ function ControlRoom() {
               </button>
             </div>
 
-            {activeQuestionIndex === 4 && (
+            {activeQuestionIndex === totalForTeam - 1 && (
               <div style={{
                 marginTop: '1.2rem', background: 'var(--gold-dim)', border: '1px solid rgba(224,179,65,0.4)',
                 borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'flex',
@@ -384,7 +403,7 @@ function ControlRoom() {
               }}>
                 <div>
                   <strong style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.05rem', color: 'var(--gold)' }}>
-                    {activeTeam?.name} has reached question 5 of 5
+                    {activeTeam?.name} has reached question {totalForTeam} of {totalForTeam}
                   </strong>
                   <div className="sub-tag">Ready to advance to the next team on stage?</div>
                 </div>
@@ -402,12 +421,19 @@ function ControlRoom() {
             <button onClick={() => setActiveTab('scores')} className={`panel-tab ${activeTab === 'scores' ? 'panel-tab-active' : ''}`}>
               Manual score adjust
             </button>
+            <button onClick={() => setActiveTab('movie')} className={`panel-tab ${activeTab === 'movie' ? 'panel-tab-active' : ''}`}>
+              Movie clips (Round 4)
+            </button>
             <button onClick={() => setActiveTab('stage')} className={`panel-tab ${activeTab === 'stage' ? 'panel-tab-active' : ''}`}>
               Leaderboard &amp; reset
             </button>
           </div>
 
           {activeTab === 'voice' && <VoicePanel />}
+
+          {activeTab === 'movie' && (
+            <MovieClipsPanel allTeams={allTeams} allQuestions={allQuestions} isPending={isPending} act={act} />
+          )}
 
           {activeTab === 'scores' && (
             <div className="admin-teams-grid">
@@ -474,6 +500,136 @@ function ControlRoom() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MovieClipsPanel({
+  allTeams, allQuestions, isPending, act,
+}: {
+  allTeams: Team[];
+  allQuestions: Question[];
+  isPending: boolean;
+  act: (fn: () => Promise<void>) => void;
+}) {
+  return (
+    <div style={{ display: 'grid', gap: '1rem' }}>
+      <div className="sub-tag" style={{ lineHeight: 1.5 }}>
+        Add a ~30 second movie clip for each team, plus 1–2 questions about it (e.g. name the movie, name the actor).
+        Paste a direct video link (a file ending in .mp4/.webm, or a Google Drive/Dropbox direct-download link) —
+        there is no file upload here, so host the clip somewhere first and paste its link.
+      </div>
+      {allTeams.map((team, idx) => {
+        const teamSlot = idx + 1;
+        const existing = allQuestions.filter((q) => q.round_number === 4 && q.team_slot === teamSlot);
+        return (
+          <MovieClipEditor
+            key={team.id}
+            teamName={team.name}
+            teamSlot={teamSlot}
+            existing={existing}
+            isPending={isPending}
+            act={act}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function MovieClipEditor({
+  teamName, teamSlot, existing, isPending, act,
+}: {
+  teamName: string;
+  teamSlot: number;
+  existing: Question[];
+  isPending: boolean;
+  act: (fn: () => Promise<void>) => void;
+}) {
+  const [videoUrl, setVideoUrl] = useState(existing[0]?.media_url || '');
+  const [q1, setQ1] = useState(existing[0]?.text || '');
+  const [a1, setA1] = useState(existing[0]?.correct_answer || '');
+  const [q2, setQ2] = useState(existing[1]?.text || '');
+  const [a2, setA2] = useState(existing[1]?.correct_answer || '');
+  const [saved, setSaved] = useState(false);
+
+  const hasClip = existing.length > 0;
+  const canSave = videoUrl.trim() && q1.trim() && a1.trim();
+
+  return (
+    <div className="lock-options-container" style={{ marginBottom: 0 }}>
+      <div className="lock-header-row">
+        <span>{teamName}</span>
+        {hasClip ? <span className="locked-opt-tag">Clip set</span> : <span className="sub-tag">No clip yet</span>}
+      </div>
+      <div style={{ display: 'grid', gap: '0.6rem' }}>
+        <input
+          type="text"
+          placeholder="Video link (https://…mp4)"
+          value={videoUrl}
+          onChange={(e) => { setVideoUrl(e.target.value); setSaved(false); }}
+          className="search-input"
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+          <input
+            type="text"
+            placeholder="Question 1 (required)"
+            value={q1}
+            onChange={(e) => { setQ1(e.target.value); setSaved(false); }}
+            className="search-input"
+          />
+          <input
+            type="text"
+            placeholder="Answer 1"
+            value={a1}
+            onChange={(e) => { setA1(e.target.value); setSaved(false); }}
+            className="search-input"
+          />
+          <input
+            type="text"
+            placeholder="Question 2 (optional)"
+            value={q2}
+            onChange={(e) => { setQ2(e.target.value); setSaved(false); }}
+            className="search-input"
+          />
+          <input
+            type="text"
+            placeholder="Answer 2"
+            value={a2}
+            onChange={(e) => { setA2(e.target.value); setSaved(false); }}
+            className="search-input"
+          />
+        </div>
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+          <button
+            disabled={isPending || !canSave}
+            className="btn btn-primary"
+            onClick={() => {
+              const questions = [{ text: q1, correct: a1 }];
+              if (q2.trim() && a2.trim()) questions.push({ text: q2, correct: a2 });
+              act(() => saveMovieClip(teamSlot, videoUrl, questions));
+              setSaved(true);
+            }}
+          >
+            {hasClip ? 'Update clip' : 'Save clip'}
+          </button>
+          {hasClip && (
+            <button
+              disabled={isPending}
+              className="btn btn-ghost"
+              onClick={() => {
+                if (confirm(`Remove ${teamName}'s movie clip?`)) {
+                  act(() => deleteMovieClip(teamSlot));
+                  setVideoUrl(''); setQ1(''); setA1(''); setQ2(''); setA2('');
+                }
+              }}
+            >
+              Remove
+            </button>
+          )}
+          {saved && <span className="sub-tag" style={{ color: 'var(--success)' }}>Saved</span>}
         </div>
       </div>
     </div>

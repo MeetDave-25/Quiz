@@ -4,7 +4,8 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSocket } from '@/app/socket-provider';
 import { kbcAudio } from '@/lib/kbc-audio';
 import { hostVoice } from '@/lib/host-voice';
-import { EVENT, TEAM_BRANDS, roundBrand, teamBrand } from '@/lib/quiz-brand';
+import { EVENT, TEAM_BRANDS, roundBrand, teamBrand, questionsPerTeam } from '@/lib/quiz-brand';
+import { useLang, LangSwitcher } from '@/lib/i18n';
 import './stage.css';
 
 interface Team {
@@ -41,6 +42,7 @@ function TimerRing({ left, total }: { left: number; total: number }) {
 
 export default function PresentationScreen() {
   const { gameState: state } = useSocket();
+  const { t } = useLang();
   const [audioReady, setAudioReady] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -197,11 +199,21 @@ export default function PresentationScreen() {
   const isMCQ = currentRound === 1 && !!state?.option_a;
   const optionsVisible = isMCQ && phase !== 'question';
   const media: string | null = state?.media_url || null;
+  const isVideo = state?.media_type === 'video';
+  const perTeam = questionsPerTeam(currentRound);
 
   const qIndex = (() => {
-    const qs = (state?.all_questions || []).filter((q: { round_number: number }) => q.round_number === currentRound);
+    const all = state?.all_questions || [];
+    if (currentRound === 4) {
+      // Movie round: questions are grouped by team_slot, not by fixed position.
+      const teamIdx = allTeams.findIndex((t) => t.id === currentTeamId);
+      const qs = all.filter((q: { round_number: number; team_slot?: number }) => q.round_number === 4 && q.team_slot === teamIdx + 1);
+      const i = qs.findIndex((q: { id: number }) => q.id === state?.current_question_id);
+      return i >= 0 ? i + 1 : null;
+    }
+    const qs = all.filter((q: { round_number: number }) => q.round_number === currentRound);
     const i = qs.findIndex((q: { id: number }) => q.id === state?.current_question_id);
-    return i >= 0 ? (i % 5) + 1 : null;
+    return i >= 0 ? (i % perTeam) + 1 : null;
   })();
 
   return (
@@ -224,13 +236,14 @@ export default function PresentationScreen() {
         </div>
 
         <div className="st-controls">
+          <LangSwitcher />
           {!audioReady
-            ? <button onClick={enableAudio} className="st-ctrl">Enable sound</button>
-            : <span className="st-ctrl st-ctrl-on">Sound on</span>}
+            ? <button onClick={enableAudio} className="st-ctrl">{t('stage.enableSound')}</button>
+            : <span className="st-ctrl st-ctrl-on">{t('stage.soundOn')}</span>}
           <button onClick={() => { hostVoice.setEnabled(!voiceOn); setVoiceOn(!voiceOn); }} className={`st-ctrl ${voiceOn ? 'st-ctrl-on' : ''}`}>
-            Voice {voiceOn ? 'on' : 'off'}
+            {t('stage.voice')} {voiceOn ? t('stage.on') : t('stage.off')}
           </button>
-          <button onClick={toggleFullscreen} className="st-ctrl" title="Fullscreen">{isFullscreen ? 'Exit full' : 'Fullscreen'}</button>
+          <button onClick={toggleFullscreen} className="st-ctrl" title="Fullscreen">{isFullscreen ? t('stage.exitFull') : t('stage.fullscreen')}</button>
         </div>
       </header>
 
@@ -259,7 +272,7 @@ export default function PresentationScreen() {
       <main className="st-arena">
         {phase === 'leaderboard' ? (
           <div className="st-board">
-            <h2>Leaderboard</h2>
+            <h2>{t('stage.leaderboard')}</h2>
             {sortedTeams.map((team, i) => {
               const idx = allTeams.findIndex((t) => t.id === team.id);
               const b = TEAM_BRANDS[idx % TEAM_BRANDS.length];
@@ -279,7 +292,7 @@ export default function PresentationScreen() {
           <div className="st-idle">
             <div className="st-idle-frame"><div><img src={EVENT.opening} alt={EVENT.festival} /></div></div>
             <div className="st-idle-next">
-              <small>अब मंच पर · Now on stage</small>
+              <small>{t('stage.nowOnStage')}</small>
               <b>{state?.current_team_name || 'Team 1'} · {brand.name}</b>
             </div>
           </div>
@@ -289,18 +302,22 @@ export default function PresentationScreen() {
               <div className="st-onstage">
                 <img src={brand.banner} alt="" />
                 <div>
-                  <small>ON STAGE</small>
+                  <small>{t('stage.onStage')}</small>
                   <b>{state.current_team_name}</b>
                 </div>
               </div>
-              {qIndex && <div className="st-qcount">QUESTION {qIndex} / 5</div>}
+              {qIndex && <div className="st-qcount">{t('stage.question')} {qIndex} / {perTeam}</div>}
               <TimerRing left={timeLeft} total={duration} />
             </div>
 
             {media ? (
               <>
                 {currentRound !== 2 && <div className="st-prompt">{state.question_text}</div>}
-                <div className="st-media"><img src={media} alt="Question" /></div>
+                <div className="st-media">
+                  {isVideo
+                    ? <video key={media} src={media} controls autoPlay playsInline />
+                    : <img src={media} alt="Question" />}
+                </div>
               </>
             ) : (
               <div className="st-rail">
@@ -338,12 +355,12 @@ export default function PresentationScreen() {
             {!isMCQ && (showAns ? (
               <div className="st-loz st-answer">
                 <div className="st-loz-inner">
-                  <small>उत्तर</small>
+                  <small>{t('stage.answer')}</small>
                   <b>{correctAns}</b>
                 </div>
               </div>
             ) : (
-              <div className="st-waiting">टीम जवाब दे — quiz master will reveal the answer</div>
+              <div className="st-waiting">{t('stage.waitingAnswer')}</div>
             ))}
           </div>
         )}
@@ -375,15 +392,15 @@ export default function PresentationScreen() {
           {overlay.kind === 'correct' && (
             <>
               <div className="st-ring" /><div className="st-ring" />
-              <div className="st-verdict st-verdict-good">सही जवाब!</div>
-              <div className="st-verdict-sub"><b>{overlay.team}</b> · +10 अंक</div>
+              <div className="st-verdict st-verdict-good">{t('stage.correctBanner')}</div>
+              <div className="st-verdict-sub"><b>{overlay.team}</b> · +10 {t('stage.points')}</div>
             </>
           )}
           {overlay.kind === 'wrong' && (
             <>
               <div className="st-ring st-ring-bad" />
-              <div className="st-verdict st-verdict-bad">गलत जवाब</div>
-              <div className="st-verdict-sub">सही उत्तर: <b>{overlay.answer}</b></div>
+              <div className="st-verdict st-verdict-bad">{t('stage.wrongBanner')}</div>
+              <div className="st-verdict-sub">{t('stage.correctAnswerLabel')}: <b>{overlay.answer}</b></div>
             </>
           )}
         </div>

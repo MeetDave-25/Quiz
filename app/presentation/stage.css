@@ -222,7 +222,7 @@
 
 .st-opt-dim { opacity: 0.45; transition: opacity 0.4s; }
 
-/* Picture / image questions (Rounds 2 & 3) */
+/* Picture / video questions (Rounds 2, 3 & 4) */
 .st-media {
   position: relative;
   border-radius: 18px;
@@ -231,7 +231,7 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: st-wipe 0.9s cubic-bezier(.2, .8, .2, 1) both;
 }
-.st-media img {
+.st-media img, .st-media video {
   display: block;
   max-width: min(78vw, 1150px);
   max-height: 50vh;

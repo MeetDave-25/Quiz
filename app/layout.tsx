@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SocketProvider } from "./socket-provider";
+import { LangProvider } from "@/lib/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,9 +12,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <SocketProvider>
-          {children}
-        </SocketProvider>
+        <LangProvider>
+          <SocketProvider>
+            {children}
+          </SocketProvider>
+        </LangProvider>
       </body>
     </html>
   );

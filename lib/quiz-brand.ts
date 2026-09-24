@@ -24,8 +24,15 @@ export const ROUND_BRANDS: Record<number, { label: string; name: string; hi: str
   1: { label: 'Round 1', name: 'General MCQ', hi: 'किसमें कितना है दम', banner: '/quiz/round-1.webp' },
   2: { label: 'Round 2', name: 'Direct Answer', hi: 'सोच समझ के', banner: '/quiz/round-2.webp' },
   3: { label: 'Round 3', name: 'Visual / Photo', hi: 'देश - परदेश', banner: '/quiz/round-3.webp' },
-  4: { label: 'Round 4', name: 'Rapid Fire', hi: 'रैपिड फायर', banner: '/quiz/round-4.webp' },
+  4: { label: 'Round 4', name: 'Movie Clip', hi: 'देख भाई देख', banner: '/quiz/round-4.webp' },
+  5: { label: 'Round 5', name: 'Rapid Fire', hi: 'रैपिड फायर', banner: '/quiz/round-5.webp' },
 };
+
+// How many questions each team gets in a round. Rounds not listed default to 5.
+export const ROUND_TEAM_QUESTIONS: Record<number, number> = { 4: 2 };
+export function questionsPerTeam(round: number) {
+  return ROUND_TEAM_QUESTIONS[round] || 5;
+}
 
 export function teamBrand(teams: { id: number }[], teamId: number | null | undefined) {
   const idx = teams.findIndex((t) => t.id === teamId);

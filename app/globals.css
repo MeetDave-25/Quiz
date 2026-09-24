@@ -127,6 +127,33 @@ button, input, select {
 .btn-block { width: 100%; }
 .btn-lg { padding: 0.95rem 1.6rem; font-size: 1rem; }
 
+/* Language switcher (EN / HI / GU) */
+.lang-switcher {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.lang-switcher-btn {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.lang-switcher-btn:hover { color: var(--text-dim); }
+.lang-switcher-active {
+  background: var(--gold);
+  color: #241a03;
+}
+.lang-switcher-active:hover { color: #241a03; }
+
 /* ============================================================
    LANDING PAGE (lj-*)
 ============================================================ */

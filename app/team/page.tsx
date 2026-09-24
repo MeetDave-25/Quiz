@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { useSocket } from '@/app/socket-provider';
+import { useLang, LangSwitcher } from '@/lib/i18n';
 
 export default function TeamScreen() {
   const { socket, gameState: state, isConnected } = useSocket();
   const [teamId, setTeamId] = useState<number | null>(null);
+  const { t } = useLang();
 
   if (!isConnected || !state) {
     return (
       <div className="team-login-root">
-        <h2 style={{ color: 'var(--text-dim)', fontWeight: 500 }}>Connecting…</h2>
+        <h2 style={{ color: 'var(--text-dim)', fontWeight: 500 }}>{t('team.connecting')}</h2>
       </div>
     );
   }
@@ -19,13 +21,14 @@ export default function TeamScreen() {
     return (
       <div className="team-login-root">
         <div className="team-login-card">
-          <h1 className="team-login-title">Join as your team</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><LangSwitcher /></div>
+          <h1 className="team-login-title">{t('team.join')}</h1>
           <div className="team-login-list">
             {[1, 2, 3, 4, 5].map(id => {
-              const t = state.all_teams?.find((team: any) => team.id === id);
+              const tm = state.all_teams?.find((team: any) => team.id === id);
               return (
                 <button key={id} className="team-login-btn" onClick={() => setTeamId(id)}>
-                  {t ? t.name : `Team ${id}`}
+                  {tm ? tm.name : `Team ${id}`}
                 </button>
               );
             })}
@@ -51,8 +54,11 @@ export default function TeamScreen() {
     <div className="team-shell">
       <header className="team-header">
         <div className="team-header-name">{team?.name}</div>
-        <div className="team-header-score">{team?.score} pts</div>
-        <button onClick={() => setTeamId(null)} className="team-leave-btn">Leave</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+          <LangSwitcher />
+          <div className="team-header-score">{team?.score} {t('team.pts')}</div>
+          <button onClick={() => setTeamId(null)} className="team-leave-btn">{t('team.leave')}</button>
+        </div>
       </header>
 
       <div className="team-body">
@@ -64,19 +70,19 @@ export default function TeamScreen() {
           : someoneElseBuzzed ? 'team-status-lost'
           : ''
         }`}>
-          {isMyTurn && state.phase === 'question' && <span>It&apos;s your turn — get ready</span>}
+          {isMyTurn && state.phase === 'question' && <span>{t('team.yourTurn')}</span>}
           {isMyTurn && state.phase === 'timer' && (
-            <span>Answer now — {Math.max(0, Math.ceil((state.timer_duration || 30) - Number(state.timer_elapsed_seconds || 0)))}s left</span>
+            <span>{t('team.answerNow', Math.max(0, Math.ceil((state.timer_duration || 30) - Number(state.timer_elapsed_seconds || 0))))}</span>
           )}
-          {!isMyTurn && !inBuzzerMode && state.phase !== 'buzzer_locked' && <span>Waiting for your turn…</span>}
-          {inBuzzerMode && <span>Buzzer active — press now</span>}
-          {iBuzzed && <span>You buzzed first!</span>}
-          {someoneElseBuzzed && <span>Too late — another team buzzed</span>}
+          {!isMyTurn && !inBuzzerMode && state.phase !== 'buzzer_locked' && <span>{t('team.waiting')}</span>}
+          {inBuzzerMode && <span>{t('team.buzzerActive')}</span>}
+          {iBuzzed && <span>{t('team.buzzedFirst')}</span>}
+          {someoneElseBuzzed && <span>{t('team.tooLate')}</span>}
         </div>
 
         {['question', 'options', 'timer', 'answered', 'answered_correct', 'answered_wrong', 'buzzer_mode', 'buzzer_locked'].includes(state.phase) && state.question_text && (
           <div className="team-question-card">
-            <div className="team-question-label">Current question</div>
+            <div className="team-question-label">{t('team.currentQuestion')}</div>
             <div className="team-question-text">{state.question_text}</div>
 
             {state.current_round === 1 && ['options', 'timer', 'answered', 'answered_correct', 'answered_wrong', 'buzzer_mode', 'buzzer_locked'].includes(state.phase) && (
@@ -104,7 +110,7 @@ export default function TeamScreen() {
               disabled={!inBuzzerMode}
               className={`buzzer-btn ${inBuzzerMode ? 'buzzer-btn-active' : 'buzzer-btn-inactive'}`}
             >
-              Buzz
+              {t('team.buzz')}
             </button>
           </div>
         )}
